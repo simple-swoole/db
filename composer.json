@@ -36,4 +36,3 @@
         "cs-fix": "php-cs-fixer fix $1"
     }
 }
-
