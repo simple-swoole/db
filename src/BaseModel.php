@@ -11,10 +11,9 @@ declare(strict_types=1);
 
 namespace Simps\DB;
 
+use PDO;
 use Exception;
 use InvalidArgumentException;
-use PDO;
-use RuntimeException;
 
 /*!
  * Medoo database framework

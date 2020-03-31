@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Simps\DB;
 
-use RuntimeException;
-
 class BaseRedis
 {
     protected $pool;
