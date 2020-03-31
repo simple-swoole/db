@@ -19,15 +19,14 @@ class BaseRedis
 
     protected $connection;
 
-    public function __construct()
+    public function __construct($config = null)
     {
-        $config = config('redis', []);
         if (! empty($config)) {
-            $this->pool = getInstance(Redis::class);
-            $this->connection = $this->pool->getConnection();
+            $this->pool = Redis::getInstance($config);
         } else {
-            throw new RuntimeException('Redis config file does not exist');
+            $this->pool = Redis::getInstance();
         }
+        $this->connection = $this->pool->getConnection();
     }
 
     public function __call($name, $arguments)

@@ -51,16 +51,15 @@ class BaseModel
 
     protected $errorInfo;
 
-    public function __construct()
+    public function __construct($config = null)
     {
-        $config = config('database', []);
         if (! empty($config)) {
-            $this->pool = getInstance(\Simps\DB\PDO::class);
-            $this->pdo = $this->pool->getConnection();
-            $this->pdo->exec('SET SQL_MODE=ANSI_QUOTES');
+            $this->pool = \Simps\DB\PDO::getInstance($config);
         } else {
-            throw new RuntimeException('Database config file does not exist');
+            $this->pool = \Simps\DB\PDO::getInstance();
         }
+        $this->pdo = $this->pool->getConnection();
+        $this->pdo->exec('SET SQL_MODE=ANSI_QUOTES');
     }
 
     public function __call($name, $arguments)
