@@ -20,6 +20,10 @@ class DB
     /** @var PDO */
     protected $pdo;
 
+    protected $statement_cache = [];
+
+    protected $statement_num = 100;
+
     public function __construct($config = null)
     {
         if (! empty($config)) {
@@ -55,7 +59,7 @@ class DB
 
     public function query(string $query, array $bindings = []): array
     {
-        $statement = $this->pdo->prepare($query);
+        $statement = $this->cacheStatement($query);
 
         $this->bindValues($statement, $bindings);
 
@@ -73,7 +77,7 @@ class DB
 
     public function execute(string $query, array $bindings = []): int
     {
-        $statement = $this->pdo->prepare($query);
+        $statement = $this->cacheStatement($query);
 
         $this->bindValues($statement, $bindings);
 
@@ -89,7 +93,7 @@ class DB
 
     public function insert(string $query, array $bindings = []): int
     {
-        $statement = $this->pdo->prepare($query);
+        $statement = $this->cacheStatement($query);
 
         $this->bindValues($statement, $bindings);
 
@@ -107,5 +111,21 @@ class DB
                 is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
             );
         }
+    }
+
+    protected function cacheStatement(string $query)
+    {
+        if (isset($this->statement_cache[$query])) {
+            $statement = $this->statement_cache[$query];
+        } else {
+            $statement = $this->pdo->prepare($query);
+            if (! empty($statement)) {
+                $this->statement_cache[$query] = $statement;
+                if (count($this->statement_cache) > $this->statement_num) {
+                    array_shift($this->statement_cache);
+                }
+            }
+        }
+        return $statement;
     }
 }
