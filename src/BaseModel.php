@@ -8,12 +8,11 @@ declare(strict_types=1);
  * @document https://doc.simps.io
  * @license  https://github.com/simple-swoole/simps/blob/master/LICENSE
  */
-
 namespace Simps\DB;
 
-use PDO;
 use Exception;
 use InvalidArgumentException;
+use PDO;
 
 /*!
  * Medoo database framework
