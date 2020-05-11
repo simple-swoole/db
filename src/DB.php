@@ -34,6 +34,11 @@ class DB
         $this->pdo = $this->pool->getConnection();
     }
 
+    public function __destruct()
+    {
+        $this->pool->close($this->pdo);
+    }
+
     public function __call($name, $arguments)
     {
         return $this->pdo->{$name}(...$arguments);
@@ -100,6 +105,11 @@ class DB
         $statement->execute();
 
         return (int) $this->pdo->lastInsertId();
+    }
+
+    public function close($connection = null)
+    {
+        $this->pool->close($connection);
     }
 
     protected function bindValues(PDOStatementProxy $statement, array $bindings): void
