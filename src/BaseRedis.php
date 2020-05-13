@@ -26,8 +26,18 @@ class BaseRedis
         $this->connection = $this->pool->getConnection();
     }
 
+    public function __destruct()
+    {
+        $this->pool->close($this->connection);
+    }
+
     public function __call($name, $arguments)
     {
         return $this->connection->{$name}(...$arguments);
+    }
+
+    public function close($connection = null)
+    {
+        $this->pool->close($connection);
     }
 }
