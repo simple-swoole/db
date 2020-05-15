@@ -65,17 +65,7 @@ class PDO
 
     public function getConnection()
     {
-        $pdo = $this->pools->get();
-        \Swoole\Coroutine::defer(
-            function () use ($pdo) {
-                if (@$pdo->is_transaction) {
-                    $pdo->rollBack();
-                    $pdo->is_transaction = false;
-                }
-                $this->close($pdo);
-            }
-        );
-        return $pdo;
+        return $this->pools->get();
     }
 
     public function close($connection = null)

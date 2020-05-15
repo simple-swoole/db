@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Simps\DB;
 
 use PDO;
+use RuntimeException;
+use Swoole\Coroutine;
 use Swoole\Database\PDOStatementProxy;
 
 class DB
@@ -20,9 +22,7 @@ class DB
     /** @var PDO */
     protected $pdo;
 
-    protected $statement_cache = [];
-
-    protected $statement_num = 100;
+    private $in_transaction = false;
 
     public function __construct($config = null)
     {
@@ -31,46 +31,60 @@ class DB
         } else {
             $this->pool = \Simps\DB\PDO::getInstance();
         }
-        $this->pdo = $this->pool->getConnection();
     }
 
-    public function __destruct()
+    public function quote(string $string, int $parameter_type = PDO::PARAM_STR)
     {
-        $this->pool->close($this->pdo);
-    }
-
-    public function __call($name, $arguments)
-    {
-        return $this->pdo->{$name}(...$arguments);
+        $this->realGetConn();
+        $ret = $this->pdo->quote($string, $parameter_type);
+        $this->release();
+        return $ret;
     }
 
     public function beginTransaction(): void
     {
+        if ($this->in_transaction) { //嵌套事务
+            throw new RuntimeException('do not support nested transaction now');
+        }
+        $this->realGetConn();
         $this->pdo->beginTransaction();
-        $this->pdo->is_transaction = true;
+        $this->in_transaction = true;
+        Coroutine::defer(function () {
+            if ($this->in_transaction) {
+                $this->rollBack();
+            }
+        });
     }
 
     public function commit(): void
     {
         $this->pdo->commit();
-        $this->pdo->is_transaction = false;
+        $this->in_transaction = false;
+        $this->release();
     }
 
     public function rollBack(): void
     {
         $this->pdo->rollBack();
-        $this->pdo->is_transaction = false;
+        $this->in_transaction = false;
+        $this->release();
     }
 
     public function query(string $query, array $bindings = []): array
     {
-        $statement = $this->cacheStatement($query);
+        $this->realGetConn();
+
+        $statement = $this->pdo->prepare($query);
 
         $this->bindValues($statement, $bindings);
 
         $statement->execute();
 
-        return $statement->fetchAll();
+        $ret = $statement->fetchAll();
+
+        $this->release();
+
+        return $ret;
     }
 
     public function fetch(string $query, array $bindings = [])
@@ -82,34 +96,47 @@ class DB
 
     public function execute(string $query, array $bindings = []): int
     {
-        $statement = $this->cacheStatement($query);
+        $this->realGetConn();
+
+        $statement = $this->pdo->prepare($query);
 
         $this->bindValues($statement, $bindings);
 
         $statement->execute();
 
-        return $statement->rowCount();
+        $ret = $statement->rowCount();
+
+        $this->release();
+
+        return $ret;
     }
 
     public function exec(string $sql): int
     {
-        return $this->pdo->exec($sql);
+        $this->realGetConn();
+
+        $ret = $this->pdo->exec($sql);
+
+        $this->release();
+
+        return $ret;
     }
 
     public function insert(string $query, array $bindings = []): int
     {
-        $statement = $this->cacheStatement($query);
+        $this->realGetConn();
+
+        $statement = $this->pdo->prepare($query);
 
         $this->bindValues($statement, $bindings);
 
         $statement->execute();
 
-        return (int) $this->pdo->lastInsertId();
-    }
+        $ret = (int) $this->pdo->lastInsertId();
 
-    public function close($connection = null)
-    {
-        $this->pool->close($connection);
+        $this->release();
+
+        return $ret;
     }
 
     protected function bindValues(PDOStatementProxy $statement, array $bindings): void
@@ -123,19 +150,17 @@ class DB
         }
     }
 
-    protected function cacheStatement(string $query)
+    private function realGetConn()
     {
-        if (isset($this->statement_cache[$query])) {
-            $statement = $this->statement_cache[$query];
-        } else {
-            $statement = $this->pdo->prepare($query);
-            if (! empty($statement)) {
-                $this->statement_cache[$query] = $statement;
-                if (count($this->statement_cache) > $this->statement_num) {
-                    array_shift($this->statement_cache);
-                }
-            }
+        if (! $this->in_transaction) {
+            $this->pdo = $this->pool->getConnection();
         }
-        return $statement;
+    }
+
+    private function release()
+    {
+        if (! $this->in_transaction) {
+            $this->pool->close($this->pdo);
+        }
     }
 }
