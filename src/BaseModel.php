@@ -13,6 +13,8 @@ namespace Simps\DB;
 use Exception;
 use InvalidArgumentException;
 use PDO;
+use RuntimeException;
+use Swoole\Coroutine;
 
 /*!
  * Medoo database framework
@@ -49,6 +51,8 @@ class BaseModel
 
     protected $errorInfo;
 
+    private $in_transaction = false;
+
     public function __construct($config = null)
     {
         if (! empty($config)) {
@@ -56,31 +60,35 @@ class BaseModel
         } else {
             $this->pool = \Simps\DB\PDO::getInstance();
         }
-        $this->pdo = $this->pool->getConnection();
-        $this->pdo->exec('SET SQL_MODE=ANSI_QUOTES');
-    }
-
-    public function __call($name, $arguments)
-    {
-        return $this->pdo->{$name}(...$arguments);
     }
 
     public function beginTransaction()
     {
+        if ($this->in_transaction) { //嵌套事务
+            throw new RuntimeException('do not support nested transaction now');
+        }
+        $this->realGetConn();
         $this->pdo->beginTransaction();
-        $this->pdo->is_transaction = true;
+        $this->in_transaction = true;
+        Coroutine::defer(function () {
+            if ($this->in_transaction) {
+                $this->rollBack();
+            }
+        });
     }
 
-    public function commit()
+    public function commit(): void
     {
         $this->pdo->commit();
-        $this->pdo->is_transaction = false;
+        $this->in_transaction = false;
+        $this->release();
     }
 
-    public function rollBack()
+    public function rollBack(): void
     {
         $this->pdo->rollBack();
-        $this->pdo->is_transaction = false;
+        $this->in_transaction = false;
+        $this->release();
     }
 
     public function action($actions)
@@ -119,6 +127,8 @@ class BaseModel
 
     public function exec($query, $map = [])
     {
+        $this->realGetConn();
+
         $this->statement = null;
 
         if ($this->debug_mode) {
@@ -140,6 +150,8 @@ class BaseModel
             $this->errorInfo = $this->pdo->errorInfo();
             $this->statement = null;
 
+            $this->release();
+
             return false;
         }
 
@@ -157,6 +169,14 @@ class BaseModel
             $this->statement = null;
         }
 
+        $lastId = $this->pdo->lastInsertId();
+
+        if ($lastId != '0' && $lastId != '') {
+            return $lastId;
+        }
+
+        $this->release();
+
         return $statement;
     }
 
@@ -172,7 +192,10 @@ class BaseModel
 
     public function quote($string)
     {
-        return $this->pdo->quote($string);
+        $this->realGetConn();
+        $ret = $this->pdo->quote($string);
+        $this->release();
+        return $ret;
     }
 
     public function create($table, $columns, $options = null)
@@ -551,21 +574,6 @@ class BaseModel
     public function sum($table, $join, $column = null, $where = null)
     {
         return $this->aggregate('sum', $table, $join, $column, $where);
-    }
-
-    public function id()
-    {
-        if ($this->statement == null) {
-            return null;
-        }
-
-        $lastId = $this->pdo->lastInsertId();
-
-        if ($lastId != '0' && $lastId != '') {
-            return $lastId;
-        }
-
-        return null;
     }
 
     public function debug()
@@ -1308,6 +1316,21 @@ class BaseModel
 
                 $stack[$key] = $current_stack;
             }
+        }
+    }
+
+    private function realGetConn()
+    {
+        if (! $this->in_transaction) {
+            $this->pdo = $this->pool->getConnection();
+            $this->pdo->exec('SET SQL_MODE=ANSI_QUOTES');
+        }
+    }
+
+    private function release()
+    {
+        if (! $this->in_transaction) {
+            $this->pool->close($this->pdo);
         }
     }
 

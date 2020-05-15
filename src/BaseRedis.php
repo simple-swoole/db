@@ -23,21 +23,16 @@ class BaseRedis
         } else {
             $this->pool = Redis::getInstance();
         }
-        $this->connection = $this->pool->getConnection();
-    }
-
-    public function __destruct()
-    {
-        $this->pool->close($this->connection);
     }
 
     public function __call($name, $arguments)
     {
-        return $this->connection->{$name}(...$arguments);
-    }
+        $this->connection = $this->pool->getConnection();
 
-    public function close($connection = null)
-    {
-        $this->pool->close($connection);
+        $data = $this->connection->{$name}(...$arguments);
+
+        $this->pool->close($this->connection);
+
+        return $data;
     }
 }
