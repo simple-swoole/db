@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 namespace Simps\DB;
 
+use RuntimeException;
 use Swoole\Database\PDOConfig;
 use Swoole\Database\PDOPool;
 
@@ -33,7 +34,7 @@ class PDO
 
     private static $instance;
 
-    public function __construct(array $config)
+    private function __construct(array $config)
     {
         if (empty($this->pools)) {
             $this->config = array_replace_recursive($this->config, $config);
@@ -55,7 +56,10 @@ class PDO
     {
         if (empty(self::$instance)) {
             if (empty($config)) {
-                throw new \RuntimeException('pdo config empty');
+                throw new RuntimeException('pdo config empty');
+            }
+            if (empty($config['size'])) {
+                throw new RuntimeException('the size of database connection pools cannot be empty');
             }
             self::$instance = new static($config);
         }

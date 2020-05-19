@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 namespace Simps\DB;
 
+use RuntimeException;
 use Swoole\Database\RedisConfig;
 use Swoole\Database\RedisPool;
 
@@ -28,7 +29,7 @@ class Redis
 
     private static $instance;
 
-    public function __construct(array $config)
+    private function __construct(array $config)
     {
         if (empty($this->pools)) {
             $this->config = array_replace_recursive($this->config, $config);
@@ -48,7 +49,10 @@ class Redis
     {
         if (empty(self::$instance)) {
             if (empty($config)) {
-                throw new \RuntimeException('redis config empty');
+                throw new RuntimeException('redis config empty');
+            }
+            if (empty($config['size'])) {
+                throw new RuntimeException('the size of redis connection pools cannot be empty');
             }
             self::$instance = new static($config);
         }
