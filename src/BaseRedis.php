@@ -35,4 +35,62 @@ class BaseRedis
 
         return $data;
     }
+
+    public function brPop($keys, $timeout)
+    {
+        $this->connection = $this->pool->getConnection();
+
+        if ($timeout === 0) {
+            // TODO Need to optimize...
+            $timeout = 99999999999;
+        }
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+
+        try {
+            $start = time();
+            $data = $this->connection->blPop($keys, $timeout);
+        } catch (\RedisException $e) {
+            $end = time();
+            if ($end - $start < $timeout) {
+                throw $e;
+            }
+            return [];
+        }
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+
+        $this->pool->close($this->connection);
+
+        return $data;
+    }
+
+    public function blPop($keys, $timeout)
+    {
+        $this->connection = $this->pool->getConnection();
+
+        if ($timeout === 0) {
+            // TODO Need to optimize...
+            $timeout = 99999999999;
+        }
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+
+        try {
+            $start = time();
+            $data = $this->connection->blPop($keys, $timeout);
+        } catch (\RedisException $e) {
+            $end = time();
+            if ($end - $start < $timeout) {
+                throw $e;
+            }
+            return [];
+        }
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+
+        $this->pool->close($this->connection);
+
+        return $data;
+    }
 }

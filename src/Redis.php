@@ -69,4 +69,9 @@ class Redis
     {
         $this->pools->put($connection);
     }
+
+    public function getConfig(): array
+    {
+        return $this->config;
+    }
 }
