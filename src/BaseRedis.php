@@ -93,4 +93,19 @@ class BaseRedis
 
         return $data;
     }
+
+    public function subscribe($channels, $callback)
+    {
+        $this->connection = $this->pool->getConnection();
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, '-1');
+
+        $data = $this->connection->subscribe($channels, $callback);
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+
+        $this->pool->close($this->connection);
+
+        return $data;
+    }
 }
