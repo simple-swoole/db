@@ -108,4 +108,28 @@ class BaseRedis
 
         return $data;
     }
+
+    public function brpoplpush($srcKey, $dstKey, $timeout)
+    {
+        $this->connection = $this->pool->getConnection();
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+
+        try {
+            $start = time();
+            $data = $this->connection->brpoplpush($srcKey, $dstKey, $timeout);
+        } catch (\RedisException $e) {
+            $end = time();
+            if ($end - $start < $timeout) {
+                throw $e;
+            }
+            return false;
+        }
+
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+
+        $this->pool->close($this->connection);
+
+        return $data;
+    }
 }
