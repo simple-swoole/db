@@ -50,7 +50,7 @@ class BaseRedis
             $timeout = 99999999999;
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
 
         $data = [];
 
@@ -65,7 +65,7 @@ class BaseRedis
             }
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
@@ -81,7 +81,7 @@ class BaseRedis
             $timeout = 99999999999;
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
 
         $data = [];
 
@@ -96,7 +96,7 @@ class BaseRedis
             }
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
@@ -127,7 +127,7 @@ class BaseRedis
     {
         $this->connection = $this->pool->getConnection();
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $timeout);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
 
         try {
             $start = time();
@@ -140,7 +140,7 @@ class BaseRedis
             $data = false;
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
