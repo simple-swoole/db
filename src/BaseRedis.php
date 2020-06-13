@@ -107,7 +107,7 @@ class BaseRedis
     {
         $this->connection = $this->pool->getConnection();
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, -1);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, '-1');
 
         try {
             $data = $this->connection->subscribe($channels, $callback);
@@ -116,7 +116,7 @@ class BaseRedis
             throw $e;
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, $this->pool->getConfig()['time_out']);
+        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
