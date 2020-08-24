@@ -28,6 +28,7 @@ class PDO
         'username' => 'root',
         'password' => 'root',
         'charset' => 'utf8mb4',
+        'unixSocket' => null,
         'options' => [],
         'size' => 64,
     ];
@@ -42,6 +43,7 @@ class PDO
                 (new PDOConfig())
                     ->withHost($this->config['host'])
                     ->withPort($this->config['port'])
+                    ->withUnixSocket($this->config['unixSocket'])
                     ->withDbName($this->config['database'])
                     ->withCharset($this->config['charset'])
                     ->withUsername($this->config['username'])
