@@ -136,6 +136,8 @@ class BaseModel
 
             $this->debug_mode = false;
 
+            $this->release();
+
             return false;
         }
 
@@ -172,6 +174,8 @@ class BaseModel
         $lastId = $this->pdo->lastInsertId();
 
         if ($lastId != '0' && $lastId != '') {
+            $this->release();
+
             return $lastId;
         }
 
