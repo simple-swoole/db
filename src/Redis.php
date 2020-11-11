@@ -55,6 +55,28 @@ class Redis
                 throw new RuntimeException('the size of redis connection pools cannot be empty');
             }
             self::$instance = new static($config);
+
+            try {
+                $ping = self::$instance->getConnection()->ping();
+            } catch (\ErrorException $e) {
+                throw new RuntimeException('redis Not working, please check redis service');
+            }
+            if ($ping != '+PONG') {
+                throw new RuntimeException('redis Not working, please check redis service');
+            }
+        }else{
+            $config = self::$instance->getConfig();
+            try {
+                $ping = self::$instance->getConnection()->ping();
+            } catch (\ErrorException $e) {
+                self::$instance = null;
+                self::$instance = self::getInstance($config);
+                $ping = self::$instance->getConnection()->ping();
+            }
+            if ($ping != '+PONG') {
+                self::$instance = null;
+                self::$instance = self::getInstance($config);
+            }
         }
 
         return self::$instance;
