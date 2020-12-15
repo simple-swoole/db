@@ -81,14 +81,14 @@ class BaseModel
     {
         $this->pdo->commit();
         $this->in_transaction = false;
-        $this->release();
+        $this->release($this->pdo);
     }
 
     public function rollBack(): void
     {
         $this->pdo->rollBack();
         $this->in_transaction = false;
-        $this->release();
+        $this->release($this->pdo);
     }
 
     public function action($actions)
@@ -136,7 +136,7 @@ class BaseModel
 
             $this->debug_mode = false;
 
-            $this->release();
+            $this->release($this->pdo);
 
             return false;
         }
@@ -152,7 +152,7 @@ class BaseModel
             $this->errorInfo = $this->pdo->errorInfo();
             $this->statement = null;
 
-            $this->release();
+            $this->release($this->pdo);
 
             return false;
         }
@@ -174,12 +174,12 @@ class BaseModel
         $lastId = $this->pdo->lastInsertId();
 
         if ($lastId != '0' && $lastId != '') {
-            $this->release();
+            $this->release($this->pdo);
 
             return $lastId;
         }
 
-        $this->release();
+        $this->release($this->pdo);
 
         return $statement;
     }
@@ -198,7 +198,7 @@ class BaseModel
     {
         $this->realGetConn();
         $ret = $this->pdo->quote($string);
-        $this->release();
+        $this->release($this->pdo);
         return $ret;
     }
 
@@ -623,6 +623,21 @@ class BaseModel
             $output[$key] = @$this->pdo->getAttribute(constant('PDO::ATTR_' . $value));
         }
         return $output;
+    }
+
+    public function release($connection = null)
+    {
+        if ($connection === null) {
+            $this->pool->close($connection);
+            return true;
+        }
+
+        if (! $this->in_transaction) {
+            $this->pool->close($connection);
+            return true;
+        }
+
+        return false;
     }
 
     protected function generate($query, $map)
@@ -1328,13 +1343,6 @@ class BaseModel
         if (! $this->in_transaction) {
             $this->pdo = $this->pool->getConnection();
             $this->pdo->exec('SET SQL_MODE=ANSI_QUOTES');
-        }
-    }
-
-    private function release()
-    {
-        if (! $this->in_transaction) {
-            $this->pool->close($this->pdo);
         }
     }
 

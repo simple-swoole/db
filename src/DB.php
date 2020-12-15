@@ -37,7 +37,7 @@ class DB
     {
         $this->realGetConn();
         $ret = $this->pdo->quote($string, $parameter_type);
-        $this->release();
+        $this->release($this->pdo);
         return $ret;
     }
 
@@ -60,14 +60,14 @@ class DB
     {
         $this->pdo->commit();
         $this->in_transaction = false;
-        $this->release();
+        $this->release($this->pdo);
     }
 
     public function rollBack(): void
     {
         $this->pdo->rollBack();
         $this->in_transaction = false;
-        $this->release();
+        $this->release($this->pdo);
     }
 
     public function query(string $query, array $bindings = []): array
@@ -82,7 +82,7 @@ class DB
 
         $ret = $statement->fetchAll();
 
-        $this->release();
+        $this->release($this->pdo);
 
         return $ret;
     }
@@ -106,7 +106,7 @@ class DB
 
         $ret = $statement->rowCount();
 
-        $this->release();
+        $this->release($this->pdo);
 
         return $ret;
     }
@@ -117,7 +117,7 @@ class DB
 
         $ret = $this->pdo->exec($sql);
 
-        $this->release();
+        $this->release($this->pdo);
 
         return $ret;
     }
@@ -134,9 +134,24 @@ class DB
 
         $ret = (int) $this->pdo->lastInsertId();
 
-        $this->release();
+        $this->release($this->pdo);
 
         return $ret;
+    }
+
+    public function release($connection = null)
+    {
+        if ($connection === null) {
+            $this->pool->close($connection);
+            return true;
+        }
+
+        if (! $this->in_transaction) {
+            $this->pool->close($connection);
+            return true;
+        }
+
+        return false;
     }
 
     protected function bindValues(PDOStatementProxy $statement, array $bindings): void
@@ -154,13 +169,6 @@ class DB
     {
         if (! $this->in_transaction) {
             $this->pdo = $this->pool->getConnection();
-        }
-    }
-
-    private function release()
-    {
-        if (! $this->in_transaction) {
-            $this->pool->close($this->pdo);
         }
     }
 }
