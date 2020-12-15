@@ -628,8 +628,7 @@ class BaseModel
     public function release($connection = null)
     {
         if ($connection === null) {
-            $this->pool->close($connection);
-            return true;
+            $this->in_transaction = false;
         }
 
         if (! $this->in_transaction) {
