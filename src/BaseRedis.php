@@ -142,4 +142,9 @@ class BaseRedis
 
         return $data;
     }
+
+    public function fill()
+    {
+        $this->pool->fill();
+    }
 }

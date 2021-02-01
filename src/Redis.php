@@ -74,4 +74,9 @@ class Redis
     {
         return $this->config;
     }
+
+    public function fill(): void
+    {
+        $this->pools->fill();
+    }
 }
