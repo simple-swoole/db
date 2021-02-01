@@ -45,19 +45,19 @@ class Redis
         }
     }
 
-    public static function getInstance($config = null)
+    public static function getInstance($config = null, $poolName = 'default')
     {
-        if (empty(self::$instance)) {
+        if (empty(self::$instance[$poolName])) {
             if (empty($config)) {
                 throw new RuntimeException('redis config empty');
             }
             if (empty($config['size'])) {
                 throw new RuntimeException('the size of redis connection pools cannot be empty');
             }
-            self::$instance = new static($config);
+            self::$instance[$poolName] = new static($config);
         }
 
-        return self::$instance;
+        return self::$instance[$poolName];
     }
 
     public function getConnection()

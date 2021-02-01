@@ -16,13 +16,9 @@ class BaseRedis
 
     protected $connection;
 
-    public function __construct($config = null)
+    public function __construct($config = null, $poolName = 'default')
     {
-        if (! empty($config)) {
-            $this->pool = Redis::getInstance($config);
-        } else {
-            $this->pool = Redis::getInstance();
-        }
+        $this->pool = Redis::getInstance($config, $poolName);
     }
 
     public function __call($name, $arguments)
