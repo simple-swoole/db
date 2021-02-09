@@ -41,13 +41,6 @@ class BaseRedis
     {
         $this->connection = $this->pool->getConnection();
 
-        if ($timeout === 0) {
-            // TODO Need to optimize...
-            $timeout = 99999999999;
-        }
-
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
-
         $data = [];
 
         try {
@@ -61,8 +54,6 @@ class BaseRedis
             }
         }
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
-
         $this->pool->close($this->connection);
 
         return $data;
@@ -71,13 +62,6 @@ class BaseRedis
     public function blPop($keys, $timeout)
     {
         $this->connection = $this->pool->getConnection();
-
-        if ($timeout === 0) {
-            // TODO Need to optimize...
-            $timeout = 99999999999;
-        }
-
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
 
         $data = [];
 
@@ -91,8 +75,6 @@ class BaseRedis
                 throw $e;
             }
         }
-
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
@@ -123,8 +105,6 @@ class BaseRedis
     {
         $this->connection = $this->pool->getConnection();
 
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $timeout);
-
         try {
             $start = time();
             $data = $this->connection->brpoplpush($srcKey, $dstKey, $timeout);
@@ -135,8 +115,6 @@ class BaseRedis
             }
             $data = false;
         }
-
-        $this->connection->setOption(\Redis::OPT_READ_TIMEOUT, (string) $this->pool->getConfig()['time_out']);
 
         $this->pool->close($this->connection);
 
