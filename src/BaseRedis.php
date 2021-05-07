@@ -25,7 +25,7 @@ class BaseRedis
 
     public function __call($name, $arguments)
     {
-        if (!$this->multiOnGoing) {
+        if (! $this->multiOnGoing) {
             $this->connection = $this->pool->getConnection();
         }
 
@@ -38,9 +38,8 @@ class BaseRedis
 
         if ($this->multiOnGoing) {
             return $this;
-        } else {
-            $this->pool->close($this->connection);
         }
+        $this->pool->close($this->connection);
 
         return $data;
     }
@@ -136,7 +135,7 @@ class BaseRedis
 
     public function multi($mode = \Redis::MULTI)
     {
-        if (!$this->multiOnGoing) {
+        if (! $this->multiOnGoing) {
             $this->connection = $this->pool->getConnection();
 
             $this->multiOnGoing = true;
@@ -149,7 +148,7 @@ class BaseRedis
 
     public function exec()
     {
-        if (!$this->multiOnGoing) {
+        if (! $this->multiOnGoing) {
             return;
         }
 
