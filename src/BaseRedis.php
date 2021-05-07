@@ -16,6 +16,8 @@ class BaseRedis
 
     protected $connection;
 
+    protected $multiOnGoing = false;
+
     public function __construct($config = null, $poolName = 'default')
     {
         $this->pool = Redis::getInstance($config, $poolName);
@@ -23,7 +25,9 @@ class BaseRedis
 
     public function __call($name, $arguments)
     {
-        $this->connection = $this->pool->getConnection();
+        if (!$this->multiOnGoing) {
+            $this->connection = $this->pool->getConnection();
+        }
 
         try {
             $data = $this->connection->{$name}(...$arguments);
@@ -32,7 +36,11 @@ class BaseRedis
             throw $e;
         }
 
-        $this->pool->close($this->connection);
+        if (!$this->multiOnGoing) {
+            $this->pool->close($this->connection);
+        } else {
+            return $this->connection;
+        }
 
         return $data;
     }
@@ -124,5 +132,33 @@ class BaseRedis
     public function fill()
     {
         $this->pool->fill();
+    }
+
+    public function multi($mode = \Redis::MULTI)
+    {
+        if (!$this->multiOnGoing) {
+            $this->connection = $this->pool->getConnection();
+
+            $this->multiOnGoing = true;
+
+            $this->connection->multi($mode);
+        }
+
+        return $this->connection;
+    }
+
+    public function exec()
+    {
+        if (!$this->multiOnGoing) {
+            return;
+        }
+
+        $result = $this->connection->exec();
+
+        $this->multiOnGoing = false;
+
+        $this->pool->close($this->connection);
+
+        return $result;
     }
 }
