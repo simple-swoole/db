@@ -36,10 +36,10 @@ class BaseRedis
             throw $e;
         }
 
-        if (!$this->multiOnGoing) {
-            $this->pool->close($this->connection);
+        if ($this->multiOnGoing) {
+            return $this;
         } else {
-            return $this->connection;
+            $this->pool->close($this->connection);
         }
 
         return $data;
@@ -144,7 +144,7 @@ class BaseRedis
             $this->connection->multi($mode);
         }
 
-        return $this->connection;
+        return $this;
     }
 
     public function exec()
