@@ -118,6 +118,7 @@ class BaseRedis
         } catch (\RedisException $e) {
             $end = time();
             if ($end - $start < $timeout) {
+                $this->pool->close(null);
                 throw $e;
             }
             $data = false;
@@ -138,9 +139,14 @@ class BaseRedis
         if (! $this->multiOnGoing) {
             $this->connection = $this->pool->getConnection();
 
+            try {
+                $this->connection->multi($mode);
+            } catch (\RedisException $e) {
+                $this->pool->close(null);
+                throw $e;
+            }
+            
             $this->multiOnGoing = true;
-
-            $this->connection->multi($mode);
         }
 
         return $this;
@@ -152,8 +158,14 @@ class BaseRedis
             return;
         }
 
-        $result = $this->connection->exec();
-
+        try {
+                $result = $this->connection->exec();
+            } catch (\RedisException $e) {
+                $this->multiOnGoing = false;
+                $this->pool->close(null);
+                throw $e;
+            }
+            
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
