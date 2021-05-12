@@ -145,7 +145,7 @@ class BaseRedis
                 $this->pool->close(null);
                 throw $e;
             }
-            
+
             $this->multiOnGoing = true;
         }
 
@@ -159,13 +159,13 @@ class BaseRedis
         }
 
         try {
-                $result = $this->connection->exec();
-            } catch (\RedisException $e) {
-                $this->multiOnGoing = false;
-                $this->pool->close(null);
-                throw $e;
-            }
-            
+            $result = $this->connection->exec();
+        } catch (\RedisException $e) {
+            $this->multiOnGoing = false;
+            $this->pool->close(null);
+            throw $e;
+        }
+
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
