@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 /**
  * This file is part of Simps.
  *
@@ -8,26 +8,26 @@ declare(strict_types = 1);
  * @document https://doc.simps.io
  * @license  https://github.com/simple-swoole/simps/blob/master/LICENSE
  */
-
 namespace Simps\DB;
 
 use PDO;
 use RuntimeException;
 use Swoole\Coroutine;
 use Swoole\Database\PDOStatementProxy;
+use Throwable;
 
 class DB
 {
-
     protected $pool;
 
     /** @var PDO */
     protected $pdo;
+
     private $in_transaction = false;
 
     public function __construct($config = null)
     {
-        if (!empty($config)) {
+        if (! empty($config)) {
             $this->pool = \Simps\DB\PDO::getInstance($config);
         } else {
             $this->pool = \Simps\DB\PDO::getInstance();
@@ -39,9 +39,9 @@ class DB
         $this->realGetConn();
         try {
             $ret = $this->pdo->quote($string, $parameter_type);
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -56,9 +56,9 @@ class DB
         $this->realGetConn();
         try {
             $this->pdo->beginTransaction();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
         $this->in_transaction = true;
         Coroutine::defer(function () {
@@ -73,9 +73,9 @@ class DB
         $this->in_transaction = false;
         try {
             $this->pdo->commit();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
         $this->release($this->pdo);
     }
@@ -86,9 +86,9 @@ class DB
 
         try {
             $this->pdo->rollBack();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -98,7 +98,6 @@ class DB
     {
         $this->realGetConn();
         try {
-
             $statement = $this->pdo->prepare($query);
 
             $this->bindValues($statement, $bindings);
@@ -106,9 +105,9 @@ class DB
             $statement->execute();
 
             $ret = $statement->fetchAll();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -127,7 +126,6 @@ class DB
     {
         $this->realGetConn();
         try {
-
             $statement = $this->pdo->prepare($query);
 
             $this->bindValues($statement, $bindings);
@@ -135,9 +133,9 @@ class DB
             $statement->execute();
 
             $ret = $statement->rowCount();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -149,13 +147,11 @@ class DB
     {
         $this->realGetConn();
         try {
-
             $ret = $this->pdo->exec($sql);
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
-
 
         $this->release($this->pdo);
 
@@ -174,11 +170,10 @@ class DB
             $statement->execute();
 
             $ret = (int) $this->pdo->lastInsertId();
-        } catch (\Exception $exc) {
-            $this->release($this->pdo);
-            throw $exc;
+        } catch (Throwable $th) {
+            $this->release();
+            throw $th;
         }
-
 
         $this->release($this->pdo);
 
@@ -191,7 +186,7 @@ class DB
             $this->in_transaction = false;
         }
 
-        if (!$this->in_transaction) {
+        if (! $this->in_transaction) {
             $this->pool->close($connection);
             return true;
         }
@@ -203,16 +198,17 @@ class DB
     {
         foreach ($bindings as $key => $value) {
             $statement->bindValue(
-                    is_string($key) ? $key : $key + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+                is_string($key) ? $key : $key + 1,
+                $value,
+                is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
             );
         }
     }
 
     private function realGetConn()
     {
-        if (!$this->in_transaction) {
+        if (! $this->in_transaction) {
             $this->pdo = $this->pool->getConnection();
         }
     }
-
 }
