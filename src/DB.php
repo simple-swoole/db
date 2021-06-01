@@ -46,6 +46,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -66,6 +67,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
         $this->in_transaction = true;
         Coroutine::defer(function () {
@@ -86,6 +88,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
         $this->release($this->pdo);
     }
@@ -102,6 +105,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -156,6 +160,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -174,6 +179,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
 
         $this->release($this->pdo);
@@ -199,6 +205,7 @@ class DB
             } else {
                 $this->release($this->pdo);
             }
+            throw $th;
         }
 
         $this->release($this->pdo);
