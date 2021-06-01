@@ -13,6 +13,7 @@ namespace Simps\DB;
 use PDO;
 use RuntimeException;
 use Swoole\Coroutine;
+use Swoole\Database\PDOProxy;
 use Swoole\Database\PDOStatementProxy;
 use Throwable;
 
@@ -40,8 +41,11 @@ class DB
         try {
             $ret = $this->pdo->quote($string, $parameter_type);
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
 
         $this->release($this->pdo);
@@ -57,8 +61,11 @@ class DB
         try {
             $this->pdo->beginTransaction();
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
         $this->in_transaction = true;
         Coroutine::defer(function () {
@@ -74,8 +81,11 @@ class DB
         try {
             $this->pdo->commit();
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
         $this->release($this->pdo);
     }
@@ -87,8 +97,11 @@ class DB
         try {
             $this->pdo->rollBack();
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
 
         $this->release($this->pdo);
@@ -106,7 +119,11 @@ class DB
 
             $ret = $statement->fetchAll();
         } catch (Throwable $th) {
-            $this->release();
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
             throw $th;
         }
 
@@ -134,8 +151,11 @@ class DB
 
             $ret = $statement->rowCount();
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
 
         $this->release($this->pdo);
@@ -149,8 +169,11 @@ class DB
         try {
             $ret = $this->pdo->exec($sql);
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
 
         $this->release($this->pdo);
@@ -171,8 +194,11 @@ class DB
 
             $ret = (int) $this->pdo->lastInsertId();
         } catch (Throwable $th) {
-            $this->release();
-            throw $th;
+            if (in_array($th->getCode(), PDOProxy::IO_ERRORS, true)) {
+                $this->release();
+            } else {
+                $this->release($this->pdo);
+            }
         }
 
         $this->release($this->pdo);
