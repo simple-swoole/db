@@ -172,4 +172,25 @@ class BaseRedis
 
         return $result;
     }
+
+    public function discard()
+    {
+        if (! $this->multiOnGoing) {
+            return;
+        }
+
+        try {
+            $result = $this->connection->discard();
+        } catch (\RedisException $e) {
+            $this->multiOnGoing = false;
+            $this->pool->close(null);
+            throw $e;
+        }
+
+        $this->multiOnGoing = false;
+
+        $this->pool->close($this->connection);
+
+        return $result;
+    }
 }
