@@ -6,7 +6,7 @@ namespace Simps\DB;
 
 /**
  * Class ActiveRecord
- * @package App\Model
+ * @package Simps\DB
  */
 abstract class ActiveRecord
 {
