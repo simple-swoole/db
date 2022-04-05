@@ -17,7 +17,7 @@ class BaseRedis
     protected $connection;
 
     protected $multiOnGoing = false;
-    
+
     protected $isWatching = false;
 
     public function __construct($config = null, $poolName = 'default')
@@ -135,7 +135,7 @@ class BaseRedis
     {
         $this->pool->fill();
     }
-    
+
     public function watch($key)
     {
         if (! $this->multiOnGoing) {
@@ -153,7 +153,7 @@ class BaseRedis
 
         return $this;
     }
-    
+
     public function unwatch()
     {
         if (! $this->isWatching) {
@@ -204,13 +204,13 @@ class BaseRedis
         try {
             $result = $this->connection->exec();
         } catch (\RedisException $e) {
-            $this->isWatching   = false;
+            $this->isWatching = false;
             $this->multiOnGoing = false;
             $this->pool->close(null);
             throw $e;
         }
 
-        $this->isWatching   = false;
+        $this->isWatching = false;
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
@@ -227,13 +227,13 @@ class BaseRedis
         try {
             $result = $this->connection->discard();
         } catch (\RedisException $e) {
-            $this->isWatching   = false;
+            $this->isWatching = false;
             $this->multiOnGoing = false;
             $this->pool->close(null);
             throw $e;
         }
 
-        $this->isWatching   = false;
+        $this->isWatching = false;
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
