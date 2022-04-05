@@ -157,7 +157,7 @@ class BaseRedis
     public function unwatch()
     {
         if (! $this->isWatching) {
-            return;
+            return true;
         }
 
         try {
