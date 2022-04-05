@@ -64,6 +64,10 @@ return PhpCsFixer\Config::create()
         'constant_case' => [
             'case' => 'lower',
         ],
+        'operator_linebreak' => [
+            'only_booleans' => true,
+            'position' => 'end',
+        ],
         'class_attributes_separation' => true,
         'combine_consecutive_unsets' => true,
         'declare_strict_types' => true,

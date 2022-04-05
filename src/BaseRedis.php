@@ -18,6 +18,8 @@ class BaseRedis
 
     protected $multiOnGoing = false;
 
+    protected $isWatching = false;
+
     public function __construct($config = null, $poolName = 'default')
     {
         $this->pool = Redis::getInstance($config, $poolName);
@@ -134,10 +136,51 @@ class BaseRedis
         $this->pool->fill();
     }
 
-    public function multi($mode = \Redis::MULTI)
+    public function watch($key)
     {
         if (! $this->multiOnGoing) {
             $this->connection = $this->pool->getConnection();
+
+            try {
+                $this->connection->watch($key);
+            } catch (\RedisException $e) {
+                $this->pool->close(null);
+                throw $e;
+            }
+
+            $this->isWatching = true;
+        }
+
+        return $this;
+    }
+
+    public function unwatch()
+    {
+        if (! $this->isWatching) {
+            return true;
+        }
+
+        try {
+            $result = $this->connection->unwatch();
+        } catch (\RedisException $e) {
+            $this->isWatching = false;
+            $this->pool->close(null);
+            throw $e;
+        }
+
+        $this->isWatching = false;
+
+        $this->pool->close($this->connection);
+
+        return $result;
+    }
+
+    public function multi($mode = \Redis::MULTI)
+    {
+        if (! $this->multiOnGoing) {
+            if (! $this->isWatching) {
+                $this->connection = $this->pool->getConnection();
+            }
 
             try {
                 $this->connection->multi($mode);
@@ -161,11 +204,13 @@ class BaseRedis
         try {
             $result = $this->connection->exec();
         } catch (\RedisException $e) {
+            $this->isWatching = false;
             $this->multiOnGoing = false;
             $this->pool->close(null);
             throw $e;
         }
 
+        $this->isWatching = false;
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
@@ -182,11 +227,13 @@ class BaseRedis
         try {
             $result = $this->connection->discard();
         } catch (\RedisException $e) {
+            $this->isWatching = false;
             $this->multiOnGoing = false;
             $this->pool->close(null);
             throw $e;
         }
 
+        $this->isWatching = false;
         $this->multiOnGoing = false;
 
         $this->pool->close($this->connection);
