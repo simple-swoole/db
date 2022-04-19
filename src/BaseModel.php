@@ -831,8 +831,8 @@ class BaseModel
             $type = gettype($value);
 
             if (
-                $type === 'array' &&
-                preg_match('/^(AND|OR)(\\s+#.*)?$/', $key, $relation_match)
+                $type === 'array'
+                && preg_match('/^(AND|OR)(\\s+#.*)?$/', $key, $relation_match)
             ) {
                 $relationship = $relation_match[1];
 
@@ -846,8 +846,8 @@ class BaseModel
             $map_key = $this->mapKey();
 
             if (
-                is_int($key) &&
-                preg_match('/([a-zA-Z0-9_\.]+)\[(?<operator>\>\=?|\<\=?|\!?\=)\]([a-zA-Z0-9_\.]+)/i', $value, $match)
+                is_int($key)
+                && preg_match('/([a-zA-Z0-9_\.]+)\[(?<operator>\>\=?|\<\=?|\!?\=)\]([a-zA-Z0-9_\.]+)/i', $value, $match)
             ) {
                 $stack[] = $this->columnQuote($match[1]) . ' ' . $match['operator'] . ' ' . $this->columnQuote(
                     $match[3]
@@ -1066,9 +1066,9 @@ class BaseModel
                 if (is_numeric($LIMIT)) {
                     $where_clause .= ' LIMIT ' . $LIMIT;
                 } elseif (
-                    is_array($LIMIT) &&
-                    is_numeric($LIMIT[0]) &&
-                    is_numeric($LIMIT[1])
+                    is_array($LIMIT)
+                    && is_numeric($LIMIT[0])
+                    && is_numeric($LIMIT[1])
                 ) {
                     $where_clause .= ' LIMIT ' . $LIMIT[1] . ' OFFSET ' . $LIMIT[0];
                 }
@@ -1098,16 +1098,16 @@ class BaseModel
         $join_key = is_array($join) ? array_keys($join) : null;
 
         if (
-            isset($join_key[0]) &&
-            strpos((string) $join_key[0], '[') === 0
+            isset($join_key[0])
+            && strpos((string) $join_key[0], '[') === 0
         ) {
             $is_join = true;
             $table_query .= ' ' . $this->buildJoin($table, $join);
         } else {
             if (is_null($columns)) {
                 if (
-                    ! is_null($where) ||
-                    (is_array($join) && isset($column_fn))
+                    ! is_null($where)
+                    || (is_array($join) && isset($column_fn))
                 ) {
                     $where = $join;
                     $columns = null;
