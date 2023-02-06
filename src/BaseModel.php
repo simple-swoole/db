@@ -913,12 +913,12 @@ class BaseModel
                         }
 
                         $connector = ' OR ';
-                        $data = array_values($value);
+                        $tmp = array_values($value);
 
-                        if (is_array($data[0])) {
+                        if (is_array($tmp[0])) {
                             if (isset($value['AND']) || isset($value['OR'])) {
                                 $connector = ' ' . array_keys($value)[0] . ' ';
-                                $value = $data[0];
+                                $value = $tmp[0];
                             }
                         }
 
